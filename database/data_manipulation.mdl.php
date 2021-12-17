@@ -4,25 +4,34 @@
 	class Data
 	{
 	    public $name;
+	    public $db_name;
 	    public $type; // e.g. VARCHAR, IMAGE, DATE
+	    public $prepare_type;
 	    public $isValid = true;
 	    public $notNull = false;
 	    public $stored_value = null;
 	    public $default_value = null;
 	    public $isPrimary = false;
 
-    	function __construct($name, $notNull = false, $default_value = null, $isPrimary = false) {
+    	function __construct($name, $db_name, $notNull = false, $default_value = null, $isPrimary = false, $prepare_type = "s") {
         	$this->name = $name;
+        	$this->db_name = $db_name;
         	$this->notNull = $notNull;
         	$this->default_value = $default_value;
         	$this->isPrimary = $isPrimary;
+        	$this->prepare_type = $prepare_type;
     	}
 
     	// === Attribute === //
-    	// Generate a HTML attribute by data name with given prefix.
+    	// Generate a HTML attribute by database name with given prefix.
+    	function AttrByDBName($prefix = "name")
+    	{
+    		return "$prefix='$this->db_name'";
+    	}
+    	// Generate a HTML attribute by display name with given prefix.
     	function AttrByName($prefix = "name")
     	{
-    		return "$prefix='$this->name'";
+    		return "$prefix='".$this->name."'";
     	}
     	// Generate a HTML attribute by data type with given prefix.
     	function AttrByType($prefix = "type")
@@ -37,6 +46,12 @@
     	// === Attribute === //
 
     	// === Get Methods === //
+
+    	// Generates somthing like this: "`name`=?"
+    	function GetUpdateSlot()
+    	{
+    		return "`".$this->db_name."`=?";
+    	}
     	// Using data's name to find equivalence value.
     	function GetValueFromUrl()
     	{
@@ -46,10 +61,16 @@
 				return "";
     	}
     	// Using data's name to find equivalence post value.
-    	function GetPostValue($default = "")
+    	function GetPostValue($default = null)
     	{
-    		$value = TryGetPost($this->name, $default);
-    		return $value;
+    		if($value = TryGetPost($this->db_name, $default))
+    		{
+    			return $value;
+    		}
+    		else
+    		{
+    			return false;
+    		}
     	}
     	// Using data's name to find equivalence query result.
     	function ParseQueryResult($result, $default = "")
@@ -71,7 +92,6 @@
     		return "<$node>".$this->name."</$node>";
     	}
 
-
     	function Validate($variable = null)
     	{
     		return true;
@@ -80,12 +100,12 @@
     	function input_node()
     	{
     		$error_class = strcmp(TryGetValue("error"), $this->name) == 0 ? "invalid" : "";
-    		return "<input ".$this->AttrByType()." ".$this->AttrByName()." ".$this->AttrByName("place_holder")." ".$this->value_attr()." class='$error_class'>";
+    		return "<input ".$this->AttrByDBName("id")." ".$this->AttrByType()." ".$this->AttrByDBName()." ".$this->AttrByName("placeholder")." ".$this->value_attr()." class='$error_class'>";
     	}
 
     	function AsPrimary()
     	{
-    		$this->primary = true;
+    		$this->isPrimary = true;
     	}
 	}
 
@@ -93,8 +113,8 @@
 	{
 		public $maximumLength = 0;
 		public $pattern = "//";
-		function __construct($name, $maximumLength = 0, $default_value = null, $pattern = "//", $isPrimary = false) {
-			parent::__construct($name, default_value: $default_value, isPrimary: $isPrimary);
+		function __construct($name, $db_name, $maximumLength = 0, $default_value = null, $pattern = "//", $isPrimary = false, $prepare_type = "s") {
+			parent::__construct($name, $db_name, default_value: $default_value, isPrimary: $isPrimary);
         	$this->name = $name;
         	$this->maximumLength = $maximumLength;
         	$this->pattern = $pattern;
@@ -125,26 +145,26 @@
 
 	class VARCHAR extends PatternData
 	{
-		function __construct($name, $maximumLength = 0, $default_value = "", $pattern = "//", $isPrimary = false)
+		function __construct($name, $db_name, $maximumLength = 0, $default_value = "", $pattern = "//", $isPrimary = false)
 		{
-			parent::__construct($name, $maximumLength, $default_value, $pattern, $isPrimary);
+			parent::__construct($name, $db_name, $maximumLength, $default_value, $pattern, $isPrimary, "s");
 			$this->type = "text";
     	}
 	}
 	class NUMERIC extends PatternData
 	{
-		function __construct($name, $maximumLength = 0, $default_value = 0, $pattern = "//", $isPrimary = false)
+		function __construct($name, $db_name, $maximumLength = 0, $default_value = 0, $pattern = "//", $isPrimary = false)
 		{
-			parent::__construct($name, $maximumLength, $default_value, $pattern, $isPrimary);
+			parent::__construct($name, $db_name, $maximumLength, $default_value, $pattern, $isPrimary, "i");
 			$this->type = "number";
     	}
 	}
 	class DATE extends PatternData
 	{
-		function __construct($name, $default_value = "1970-01-01")
+		function __construct($name, $db_name, $default_value = "1970-01-01")
 		{
-			parent::__construct($name, 12, $default_value, "/^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$/");
-			$this->type = "number";
+			parent::__construct($name, $db_name, 12, $default_value, "/^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$/", false, "s");
+			$this->type = "date";
     	}
 	}
 	class IMAGE extends DATA
@@ -155,9 +175,9 @@
 		public $targetFilePath = "";
 		public $fileType = "";
 		public $size_limit = 0;
-		function __construct($name, $size_limit = 0)
+		function __construct($name, $db_name, $size_limit = 0)
 		{
-			parent::__construct($name, default_value: null);
+			parent::__construct($name, $db_name, default_value: "NULL", prepare_type: "b");
 			$this->type = "file";
 			$this->size_limit = $size_limit;
     	}
@@ -184,25 +204,79 @@
 		        $statusMsg = 'Sorry, only JPG, JPEG, PNG files are allowed to upload.';
 		    }
     	}
+    	function GetPostValue($default = null)
+    	{
+    		return "NULL";
+    	}
 	}
 
 	class Scheme extends ArrayObject
 	{
+		public $table_name;
+
 		static function Create($table_name, $blueprint_func)
 		{
 			$newScheme = new Scheme();
+			$newScheme->table_name = $table_name;
 			$blueprint_func($newScheme);
 			return $newScheme;
 		}
 
+		// Returns primary colume name
 		function FindPrimary()
 		{
 			foreach ($this as $key => $value) {
 				if($value->isPrimary)
 				{
-					return $key;
+					return $value;
 				}
 			}
+			echo "Primary not found";
+		}
+
+		//Generates a array like [`name_1`=?, `name_2`=?...]
+		function GetUpdateSlots()
+		{
+			$output = array();
+			foreach ($this as $key => $value) {
+				array_push($output, $value->GetUpdateSlot());
+			}
+			return $output;
+		}
+
+		function GetPostValues()
+		{
+			$output = array();
+			foreach ($this as $key => $value) {
+				if($post_data = $value->GetPostValue($value->default_value))
+				{
+					array_push($output, $post_data);
+					// $output[$value->db_name] = $post_data;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			return $output;
+		}
+
+		function GetPrepareTypes()
+		{
+			$output = array();
+			foreach ($this as $key => $value) {
+				array_push($output, $value->prepare_type);
+			}
+			return $output;
+		}
+
+		function GetDBNames()
+		{
+			$output = array();
+			foreach ($this as $key => $value) {
+				array_push($output, $value->db_name);
+			}
+			return $output;
 		}
 
 		function GetNames()
@@ -223,25 +297,140 @@
 			return $output;
 		}
 
+		function Update($conn)
+		{
+			if(!empty($conn))
+			{
+				$stmt = $conn->stmt_init();
+
+				$primary_name = $this->FindPrimary()->db_name;
+
+				$placeholders = $this->GetUpdateSlots();
+				$placeholders = implode(", ", $placeholders);
+
+				if(!$origin = TryGetPost("origin"))
+				{
+					exit("origin not set");
+				}
+
+				$sql = "UPDATE `".$this->table_name."` SET ".$placeholders." WHERE `".$primary_name."` = ?";
+				echo $sql;
+				if($stmt->prepare($sql))
+				{
+					echo "Prepare successfully";
+				}
+				else
+				{
+					echo "Prepare Failed";	
+				}
+
+				$prepare_types = $this->GetPrepareTypes();
+				array_push($prepare_types, $this->FindPrimary()->prepare_type);
+				$prepare_types = implode("", $prepare_types);
+
+
+				if($post_values = $this->GetPostValues())
+				{
+					array_push($post_values, $origin);
+					$stmt->bind_param($prepare_types, ...$post_values);
+				}
+				else
+				{
+					exit("not enough arguments");
+				}
+				
+				if($stmt->execute())
+				{
+					echo "Update success";
+					return true;
+				}
+				else
+				{
+					echo "Update failed";
+					return false;
+				}
+			}
+			else
+			{
+				exit("Connection not available");
+			}
+		}
+
+		function Insert($conn)
+		{
+			if(!empty($conn))
+			{
+				$stmt = $conn->stmt_init();
+				$names_arr = $this->GetDBNames();
+				$names = implode("`, `", $names_arr);
+
+				$placeholders = array();
+				foreach ($names_arr as $name) {
+					array_push($placeholders, "?");
+				}
+				$placeholders = implode(", ", $placeholders);
+
+				$sql = "INSERT INTO ".$this->table_name." (`".$names."`) VALUES (".$placeholders.")";
+				if($stmt->prepare($sql))
+				{
+					echo "Prepare successfully";
+				}
+				else
+				{
+					echo "Prepare Failed";	
+				}
+
+				$prepare_types = implode("", $this->GetPrepareTypes());
+
+				if($post_values = $this->GetPostValues())
+				{
+					$stmt->bind_param($prepare_types, ...$post_values);
+				}
+				else
+				{
+					exit("not enough arguments");
+				}
+				
+				if($stmt->execute())
+				{
+					echo "Insert success";
+					return true;
+				}
+				else
+				{
+					echo "Insert failed";
+					echo("Error description: " . $mysqli -> error);
+					return false;
+				}
+			}
+			else
+			{
+				exit("Connection not available");
+			}
+		}
+
 		function Select($conn, $primary_match = null, $other_matches = null, $limit = 10, $offset = 0)
 		{
 			if(!empty($conn))
 			{
-				$primary_name = $this->FindPrimary();
+				$primary_name = $this->FindPrimary()->db_name;
 				$stmt = $conn->stmt_init();
 
 				if(empty($primary_match)) // Select All
 				{
-					$sql = "SELECT * FROM `customer_data` LIMIT $limit OFFSET $offset";
+					$sql = "SELECT * FROM `".$this->table_name."` LIMIT $limit OFFSET $offset";
 					$stmt->prepare($sql);
 				}
 				else
 				{
-					$sql = "SELECT * FROM `customer_data` WHERE `$primary_name` LIKE ? LIMIT $limit OFFSET $offset";
+					$sql = "SELECT * FROM `".$this->table_name."` WHERE `$primary_name` LIKE ? LIMIT $limit OFFSET $offset";
+					echo $sql;
 					if(!$stmt->prepare($sql))
 					{
+						echo "Prepare Error: ".$sql;
 						return null;
 					}
+					$primary_match = "%$primary_match%";
 					$stmt->bind_param("s", $primary_match);
 				}
 
@@ -253,7 +442,6 @@
 				$stmt->bind_result(...array_values($buffer));
 
 				$output = $result->fetch_all(MYSQLI_ASSOC);
-				// echo var_dump($output);
 				return $output;
 			}
 			else
@@ -268,24 +456,24 @@
 			return $this->offsetGet($var->name);
 		}
 
-		function IMAGE($name, $size_limit = 0)
+		function IMAGE($name, $db_name, $size_limit = 0)
 		{
-			return $this->InsertNewVariable(new Image($name), $size_limit);
+			return $this->InsertNewVariable(new Image($name, $db_name), $size_limit);
 		}
 
-		function NUMERIC($name, $maximumLength = 0, $default_value = "", $pattern = "//", $isPrimary = false)
+		function NUMERIC($name, $db_name, $maximumLength = 0, $default_value = "", $pattern = "//", $isPrimary = false)
 		{
-			return $this->InsertNewVariable(new NUMERIC($name, $maximumLength, $default_value, $pattern, $isPrimary));
+			return $this->InsertNewVariable(new NUMERIC($name, $db_name, $maximumLength, $default_value, $pattern, $isPrimary));
 		}
 
-		function DATE($name, $default_value = "1970-01-01")
+		function DATE($name, $db_name, $default_value = "1970-01-01")
 		{
-			return $this->InsertNewVariable(new DATE($name, $default_value));
+			return $this->InsertNewVariable(new DATE($name, $db_name, $default_value));
 		}
 
-		function VARCHAR($name, $maximumLength = 0, $default_value = "", $pattern = "//", $isPrimary = false)
+		function VARCHAR($name, $db_name, $maximumLength = 0, $default_value = "", $pattern = "//", $isPrimary = false)
 		{
-			return $this->InsertNewVariable(new VARCHAR($name, $maximumLength, $default_value, $pattern, $isPrimary));
+			return $this->InsertNewVariable(new VARCHAR($name, $db_name, $maximumLength, $default_value, $pattern, $isPrimary));
 		}
 
 		function IsAllValid(&$error_array)
@@ -360,17 +548,6 @@
 	        return parent::offsetUnset($index);
 	    }
 	    // === Array ===
-	}
-
-	abstract class Table
-	{
-		public $rows = array();
-		function InsertNewRow($row)
-		{
-			array_push($this->rows, $row);
-		}
-
-		abstract function Select();
 	}
 
 	// ===== OLD =====

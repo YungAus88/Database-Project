@@ -20,6 +20,7 @@ define('VIEW_HEADER',   DIR_VIEWS . 'header.php');
 define('VIEW_NAVIGATION',   DIR_VIEWS . 'navigation.php');
 define('VIEW_FOOTER',   DIR_VIEWS . 'footer.php');
 
+
 require_once(DIR_MDL."tool.mdl.php");
 require_once(DATA_MANIP);
 require_once(DATA_CUSTOMER);
