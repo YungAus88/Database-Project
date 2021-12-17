@@ -22,7 +22,7 @@
     include_once VIEW_HEADER;
 
 
-    $selection = $customer_scheme->GetPostValues(true, "%");
+    $selection = $order_scheme->GetPostValues(true, "%");
 
     $modifying = TryGetValue("modifying", null);
     $modifying = $modifying != null;
@@ -31,7 +31,7 @@
     $offset = TryGetValue("offset", "0");
 
     echo "selection not set";
-    $results = $customer_scheme->Select($conn, $selection, offset: $offset);
+    $results = $order_scheme->Select($conn, $selection, offset: $offset);
   ?>
   <body class="w3-light-grey">
 
@@ -60,8 +60,8 @@
     </div>
     <div class="w3-bar-block">
       <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
-      <a href="new_customer.php" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa material-icons fa-fw">people</i>  Customers</a>
-      <a href="new_order.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">pending_actions</i>  Orders</a>
+      <a href="new_customer.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">people</i>  Customers</a>
+      <a href="new_order.php" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa material-icons fa-fw">pending_actions</i>  Orders</a>
       <a href="new_product.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">widgets</i>  Products</a>
       <a href="new_receivable.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">account_balance_wallet</i>  Orders</a>
     </div>
@@ -86,7 +86,7 @@
           <div class="w3-right">
             <h3>
               <?php
-                $customer_scheme->CountRows($conn, 'age');
+                // $order_scheme->CountRows($conn, 'age');
               ?>
             </h3>
           </div>
@@ -101,7 +101,7 @@
           <div class="w3-right">
             <h3>
               <?php
-                $customer_scheme->Average($conn, 'age');
+                // $order_scheme->Average($conn, 'age');
               ?>
             </h3>
           </div>
@@ -143,11 +143,11 @@
         <form method="post" action="" class="form-container">
           <tr>
             <td></td>
-            <?php echo create_headers($customer_scheme); ?>
+            <?php echo create_headers($order_scheme); ?>
           </tr>
           <tr>
             <td><input type="submit" style='width:50px;'></td>
-            <?php echo create_inputs($customer_scheme, use_default: "post", no_style: false, nullable: true); ?>
+            <?php echo create_inputs($order_scheme, use_default: "post", no_style: false, nullable: true); ?>
           </tr>
         </form>
         <?php
@@ -304,11 +304,11 @@
     <form method="post" action="../modules/update.php" class="form-container">
       <h1>修改客戶</h1>
 
-      <?php echo create_inputs($customer_scheme, use_default: "none"); ?>
+      <?php echo create_inputs($order_scheme, use_default: "none"); ?>
 
       <!-- Create a hidden primary value for seraching the original primary -->
       <?php echo "<input type='hidden' name='origin' id='origin' value=''>"; ?>
-      <input type="hidden" name="table" value="customer_scheme"/>
+      <input type="hidden" name="table" value="order_scheme"/>
 
       <button type="submit" class="btn">確認修改</button>
       <button type="button" class="btn cancel" onclick="closeUpdateForm()">Close</button>
@@ -319,11 +319,11 @@
       <h1>新增客戶</h1>
 
       <?php 
-        $input_keys = ['name', 'id', 'phone', 'address', 'age', 'profession', 'photo'];
-        echo create_inputs($customer_scheme, keys: $input_keys, use_default: "none"); 
+        $input_keys = ["customer_id","product_name","supplier_co_name","product_unit", "order_count","product_value_per_unit","order_value"];
+        echo create_inputs($order_scheme, keys: $input_keys, use_default: "none"); 
       ?>
 
-      <input type="hidden" name="table" value="customer_scheme"/>
+      <input type="hidden" name="table" value="order_scheme"/>
       <button type="submit" class="btn">新增</button>
       <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
     </form>
@@ -331,9 +331,9 @@
 
   <script type="text/javascript">
 
-    var primary = <?php echo json_encode($customer_scheme->FindPrimary()->db_name); ?>;
+    var primary = <?php echo json_encode($order_scheme->FindPrimary()->db_name); ?>;
     var primary_value = null;
-    var db_names = <?php echo json_encode($customer_scheme->GetDBNames()); ?>;
+    var db_names = <?php echo json_encode($order_scheme->GetDBNames()); ?>;
 
     function openForm() {
       document.getElementById("insert-form-container").style.display = "block";

@@ -4,7 +4,7 @@
 	<meta charset="utf-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
 	<link rel="stylesheet" type="text/css" href="../CSS/style.css"/>
-	<title>Customers</title>
+	<title>Order</title>
 </head>
 <?php
 	ini_set('display_errors', 1);
@@ -14,10 +14,11 @@
 	require_once DATA_CUSTOMER;
 	include_once VIEW_HEADER;
 
-
-	$selection = $customer_scheme->GetPostValues(true, "%");
-	echo var_dump($selection);
-	echo "<br>";
+	$selection = TryGetValue("selection", null);
+	if($selection == null)
+	{
+		$selection = TryGetPost($order_scheme->FindPrimary()->db_name, "");
+	}
 
 	$modifying = TryGetValue("modifying", null);
 	$modifying = $modifying != null;
@@ -25,15 +26,22 @@
 
 	$offset = TryGetValue("offset", "0");
 
-	echo "selection not set";
-	$results = $customer_scheme->Select($conn, $selection, offset: $offset);
-	
+	if(!empty($selection))
+	{
+		echo "Searching $selection in ".$order_scheme->FindPrimary()->db_name;
+		$results = $order_scheme->Select($conn, $selection);
+	}
+	else
+	{
+		echo "selection not set";
+		$results = $order_scheme->Select($conn, offset: $offset);
+	}
 ?>
 <script type="text/javascript">
 
-	var primary = <?php echo json_encode($customer_scheme->FindPrimary()->db_name); ?>;
+	var primary = <?php echo json_encode($order_scheme->FindPrimary()->db_name); ?>;
 	var primary_value = null;
-	var db_names = <?php echo json_encode($customer_scheme->GetDBNames()); ?>;
+	var db_names = <?php echo json_encode($order_scheme->GetDBNames()); ?>;
 	console.log(primary);
 
 	function openForm() {
@@ -88,11 +96,11 @@
 		<form method="post" action="customers.php" class="form-container">
 			<tr>
 				<td></td>
-				<?php echo create_headers($customer_scheme); ?>
+				<?php echo create_headers($order_scheme); ?>
 			</tr>
 			<tr>
 				<td><input type="submit" ></td>
-				<?php echo create_inputs($customer_scheme, use_default: "post"); ?>
+				<?php echo create_inputs($order_scheme); ?>
 			</tr>
 		</form>
 		<?php
@@ -116,13 +124,13 @@
 	<br>
 	<div class="form-popup" id="update-form-container">
 		<form method="post" action="../modules/update.php" class="form-container">
-			<h1>修改客戶</h1>
+			<h1>修改帳單</h1>
 
-			<?php echo create_inputs($customer_scheme); ?>
+			<?php echo create_inputs($order_scheme); ?>
 
 			<!-- Create a hidden primary value for seraching the original primary -->
 			<?php echo "<input type='hidden' name='origin' id='origin' value=''>"; ?>
-			<input type="hidden" name="table" value="customer_scheme"/>
+			<input type="hidden" name="table" value="order_scheme"/>
 
 			<button type="submit" class="btn">確認修改</button>
 			<button type="button" class="btn cancel" onclick="closeUpdateForm()">Close</button>
@@ -130,14 +138,14 @@
 	</div>
 	<div class="form-popup" id="insert-form-container">
 		<form method="post" action="../modules/insert.php" class="form-container">
-			<h1>新增客戶</h1>
+			<h1>新增帳單</h1>
 
 			<?php 
-				$input_keys = ['name', 'id', 'phone', 'address', 'age', 'profession', 'photo'];
-				echo create_inputs($customer_scheme, keys: $input_keys); 
+				$input_keys = ["customer_id","product_name","supplier_co_name","product_unit", "order_count","product_value_per_unit","order_value"];
+				echo create_inputs($order_scheme, keys: $input_keys); 
 			?>
 
-			<input type="hidden" name="table" value="customer_scheme"/>
+			<input type="hidden" name="table" value="order_scheme"/>
 			<button type="submit" class="btn">新增</button>
 			<button type="button" class="btn cancel" onclick="closeForm()">Close</button>
 		</form>

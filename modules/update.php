@@ -27,7 +27,7 @@
 	}
 	else
 	{
-		
 		$scheme->Update($conn);
 	}
+	PreviousPage();
 ?>

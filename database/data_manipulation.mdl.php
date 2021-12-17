@@ -97,10 +97,21 @@
     		return true;
     	}
 
-    	function input_node()
+    	function input_node($use_default = "default", $width = 166, $no_style = true, $nullable = true, $other = "")
     	{
     		$error_class = strcmp(TryGetValue("error"), $this->name) == 0 ? "invalid" : "";
-    		return "<input ".$this->AttrByDBName("id")." ".$this->AttrByType()." ".$this->AttrByDBName()." ".$this->AttrByName("placeholder")." ".$this->value_attr()." class='$error_class'>";
+			$value = "";
+			if($use_default == "default")
+			{
+				$value = "value='".$this->default_value."'";
+			}
+			else if($use_default == "post")
+			{
+				$value = "value='".$this->GetPostValue()."'";
+			}
+			$style_attr = $no_style ? "" : "style='width:".$width."px'";
+			$required_attr = $this->notNull ? "" : ($nullable ? "" : "required");
+    		return "<input ".$this->AttrByDBName("id")." $value ".$this->AttrByType()." $style_attr ".$this->AttrByDBName()." ".$this->AttrByName("placeholder")." class='$error_class' $other $required_attr>";
     	}
 
     	function AsPrimary()
@@ -141,6 +152,13 @@
 				return true;
 			}
     	}
+    	function input_node($use_default = "default", $width = 166, $no_style = true, $nullable = true, $other = "")
+    	{
+    		$max_attr = " maxlength='".$this->maximumLength."' ";
+    		$pattern_attr = strlen($this->pattern) > 2 ? " pattern='".substr($this->pattern, 1, strlen($this->pattern) - 2)."' " : "";
+    		$attrs = $max_attr.$pattern_attr;
+    		return parent::input_node($use_default, $this->maximumLength == 0 ? $width : $this->maximumLength * 8, $no_style, $nullable, $attrs);
+    	}
 	}
 
 	class VARCHAR extends PatternData
@@ -163,8 +181,12 @@
 	{
 		function __construct($name, $db_name, $default_value = "1970-01-01")
 		{
-			parent::__construct($name, $db_name, 12, $default_value, "/^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$/", false, "s");
+			parent::__construct($name, $db_name, 12, $default_value, "/^\d{4}[\-\/\s]?((((0[13578])|(1[02]))[\-\/\s]?(([0-2][0-9])|(3[01])))|(((0[469])|(11))[\-\/\s]?(([0-2][0-9])|(30)))|(02[\-\/\s]?[0-2][0-9]))$/", false, "s");
 			$this->type = "date";
+    	}
+    	function input_node($use_default = "default", $width = 166, $no_style = true, $nullable = true, $other = "")
+    	{
+    		return parent::input_node($use_default, width: 200, no_style: $no_style, nullable: $nullable);
     	}
 	}
 	class IMAGE extends DATA
@@ -206,7 +228,7 @@
     	}
     	function GetPostValue($default = null)
     	{
-    		return "NULL";
+    		return $default == null ? "NULL" : $default;
     	}
 	}
 
@@ -244,14 +266,20 @@
 			return $output;
 		}
 
-		function GetPostValues()
+		function GetPostValues($use_key = false, $default = null)
 		{
 			$output = array();
 			foreach ($this as $key => $value) {
-				if($post_data = $value->GetPostValue($value->default_value))
+				if($post_data = $value->GetPostValue($default == null ? $value->default_value : $default))
 				{
-					array_push($output, $post_data);
-					// $output[$value->db_name] = $post_data;
+					if($use_key)
+					{
+						$output[$value->db_name] = $post_data;
+					}
+					else
+					{
+						array_push($output, $post_data);
+					}
 				}
 				else
 				{
@@ -295,6 +323,38 @@
 				$output[$key] = null;
 			}
 			return $output;
+		}
+
+		function Average($conn, $col, $where = null)
+		{
+			if(!empty($conn))
+			{
+				$stmt = $conn->stmt_init();
+				if($where == null)
+				{
+					$where_statement = "";
+				}
+				$sql = "SELECT  CAST(AVG($col) AS DECIMAL(10,2)) as count FROM ".$this->table_name." $where_statement;";
+				$result=mysqli_query($conn, $sql);
+				$data=mysqli_fetch_assoc($result);
+				echo $data['count'];
+			}
+		}
+
+		function CountRows($conn, $col, $where = null)
+		{
+			if(!empty($conn))
+			{
+				$stmt = $conn->stmt_init();
+				if($where == null)
+				{
+					$where_statement = "";
+				}
+				$sql = "SELECT COUNT($col) as count FROM ".$this->table_name." $where_statement;";
+				$result=mysqli_query($conn, $sql);
+				$data=mysqli_fetch_assoc($result);
+				echo $data['count'];
+			}
 		}
 
 		function Update($conn)
@@ -399,7 +459,7 @@
 				else
 				{
 					echo "Insert failed";
-					echo("Error description: " . $mysqli -> error);
+					echo("Error description: " . $conn->error);
 					return false;
 				}
 			}
@@ -409,29 +469,40 @@
 			}
 		}
 
-		function Select($conn, $primary_match = null, $other_matches = null, $limit = 10, $offset = 0)
+		function Select($conn, $where_statements = null, $limit = 10, $offset = 0)
 		{
 			if(!empty($conn))
 			{
-				$primary_name = $this->FindPrimary()->db_name;
 				$stmt = $conn->stmt_init();
 
-				if(empty($primary_match)) // Select All
+				$sql_where = array();
+				$where_value_buffer = array();
+				$sql_params = "";
+				if($where_statements != null)
 				{
-					$sql = "SELECT * FROM `".$this->table_name."` LIMIT $limit OFFSET $offset";
-					$stmt->prepare($sql);
-				}
-				else
-				{
-					$sql = "SELECT * FROM `".$this->table_name."` WHERE `$primary_name` LIKE ? LIMIT $limit OFFSET $offset";
-					echo $sql;
+					foreach ($where_statements as $key => $value)
+					{
+						array_push($sql_where, "$key LIKE ?");
+						array_push($where_value_buffer, "%$value%");
+						$sql_params = $sql_params."s";
+					}
+
+					$sql_where = implode(" AND ", $sql_where);
+
+					$sql = "SELECT * FROM `".$this->table_name."` WHERE $sql_where LIMIT $limit OFFSET $offset";
+					
 					if(!$stmt->prepare($sql))
 					{
 						echo "Prepare Error: ".$sql;
 						return null;
 					}
-					$primary_match = "%$primary_match%";
-					$stmt->bind_param("s", $primary_match);
+					echo var_dump($where_value_buffer);
+					$stmt->bind_param($sql_params, ...$where_value_buffer);
+				}
+				else // Select All
+				{
+					$sql = "SELECT * FROM `".$this->table_name."` LIMIT $limit OFFSET $offset";
+					$stmt->prepare($sql);
 				}
 
 				$stmt->execute();
@@ -439,10 +510,15 @@
 
 				$buffer = $this->GenBuffer();
 
-				$stmt->bind_result(...array_values($buffer));
-
-				$output = $result->fetch_all(MYSQLI_ASSOC);
-				return $output;
+				if($stmt->bind_result(...array_values($buffer)))
+				{
+					$output = $result->fetch_all(MYSQLI_ASSOC);
+					return $output;
+				}
+				else
+				{
+					echo("Error description: " . $conn->error);
+				}
 			}
 			else
 			{
@@ -582,13 +658,20 @@
 		}
 		return $output;
 	}
-	function create_inputs($scheme, $end = "")
+	function create_inputs($scheme, $keys = null, $use_default = "default", $no_style = true, $end = "", $nullable = false)
 	{
 		$output = "";
 
 		foreach ($scheme as $key => $col) {
+			if($keys == null || in_array($col->db_name, $keys))
+			{
+				$output = $output."<td>".$col->input_node($use_default, no_style: $no_style, nullable: $nullable)."</td>".$end;
+			}
+			else
+			{
+
+			}
 			// echo gettype($scheme);
-			$output = $output."<td>".$col->input_node()."</td>".$end;
 		}
 
 		return $output;

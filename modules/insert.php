@@ -23,7 +23,7 @@
 	}
 	else
 	{
-		
 		$scheme->Insert($conn);
 	}
+	PreviousPage();
 ?>

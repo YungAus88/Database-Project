@@ -25,8 +25,10 @@
 		}
 		
 	}
-	function PostToURLAttribute()
+	function PreviousPage()
 	{
-
+		$url = $_SERVER['HTTP_REFERER'];
+		$url = explode("?", $url)[0];
+		header('Location: '.$url);
 	}
 ?>
