@@ -23,7 +23,13 @@
 	}
 	else
 	{
-		$scheme->Insert($conn);
+		if($scheme->Insert($conn) == true)
+		{
+			PreviousPage();
+		}
+		else
+		{
+			echo "Something went wrong";
+		}
 	}
-	PreviousPage();
 ?>

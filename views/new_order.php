@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Customer</title>
+    <title>Orders</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -30,16 +30,11 @@
 
     $offset = TryGetValue("offset", "0");
 
-    echo "selection not set";
-    $results = $order_scheme->Select($conn, $selection, offset: $offset);
+    $results = $order_scheme->Select($conn, "*", $selection, offset: $offset);
   ?>
   <body class="w3-light-grey">
 
-  <!-- Top Bar container -->
-  <div class="w3-bar w3-top w3-black w3-large" style="z-index:4">
-    <button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="w3_open();"><i class="fa fa-bars"></i>  Menu</button>
-    <span class="w3-bar-item w3-right">Logo</span>
-  </div>
+  <?php include "top_bar.php" ?>
 
   <!-- Sidebar/menu -->
   <nav class="w3-sidebar w3-collapse w3-white" style="z-index:3;width:300px;" id="mySidebar"><br>
@@ -56,14 +51,13 @@
     </div>
     <hr>
     <div class="w3-container">
-      <h5>Dashboard</h5>
+      <h5>資料庫</h5>
     </div>
     <div class="w3-bar-block">
-      <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
-      <a href="new_customer.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">people</i>  Customers</a>
-      <a href="new_order.php" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa material-icons fa-fw">pending_actions</i>  Orders</a>
-      <a href="new_product.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">widgets</i>  Products</a>
-      <a href="new_receivable.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">account_balance_wallet</i>  Orders</a>
+      <a href="new_customer.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">people</i>  客戶基本資料</a>
+      <a href="new_order.php" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa material-icons fa-fw">pending_actions</i>  客戶訂貨記錄</a>
+      <a href="new_product.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">widgets</i>  公司進貨</a>
+      <a href="new_receivable.php" class="w3-bar-item w3-button w3-padding"><i class="fa material-icons fa-fw">account_balance_wallet</i>  公司應收帳款</a>
     </div>
   </nav>
 
@@ -76,7 +70,7 @@
 
     <!-- Dash board -->
     <header class="w3-container" style="padding-top:22px">
-      <h5><b><i class="fa fa-dashboard"></i> My Dashboard</b></h5>
+      <h5><b><i class="fa fa-dashboard"></i> 資料統計</b></h5>
     </header>
 
     <div class="w3-row-padding w3-margin-bottom">
@@ -147,7 +141,9 @@
           </tr>
           <tr>
             <td><input type="submit" style='width:50px;'></td>
-            <?php echo create_inputs($order_scheme, use_default: "post", no_style: false, nullable: true); ?>
+              <?php 
+                echo create_inputs($conn, $order_scheme, use_default: "post", dynamic_width: false, nullable: true);
+              ?>
           </tr>
         </form>
         <?php
@@ -170,7 +166,7 @@
       </table>
     </div>
     <!-- End Regions -->
-
+<!-- 
     <hr>
     <div class="w3-container">
       <h5>General Stats</h5>
@@ -286,25 +282,20 @@
           <p>Interests</p>
         </div>
       </div>
-    </div>
+    </div> -->
 
-    <!-- Footer -->
-    <footer class="w3-container w3-padding-16 w3-light-grey">
-      <h4>FOOTER</h4>
-      <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
-    </footer>
+    <?php include "footer.php"; ?>
 
     <!-- End page content -->
   </div>
 
   <!-- Popup Form -->
   <button class="open-button" onclick="openForm()">新增資料</button>
-
   <div class="form-popup" id="update-form-container">
     <form method="post" action="../modules/update.php" class="form-container">
       <h1>修改客戶</h1>
 
-      <?php echo create_inputs($order_scheme, use_default: "none"); ?>
+      <?php echo create_inputs($conn, $order_scheme, use_default: "none"); ?>
 
       <!-- Create a hidden primary value for seraching the original primary -->
       <?php echo "<input type='hidden' name='origin' id='origin' value=''>"; ?>
@@ -320,7 +311,7 @@
 
       <?php 
         $input_keys = ["customer_id","product_name","supplier_co_name","product_unit", "order_count","product_value_per_unit","order_value"];
-        echo create_inputs($order_scheme, keys: $input_keys, use_default: "none"); 
+        echo create_inputs($conn, $order_scheme, keys: $input_keys, use_default: "none"); 
       ?>
 
       <input type="hidden" name="table" value="order_scheme"/>

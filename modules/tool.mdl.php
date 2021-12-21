@@ -25,6 +25,12 @@
 		}
 		
 	}
+	function CurrentPage()
+	{
+		$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+		$url = explode("?", $url)[0];
+		return $url;
+	}
 	function PreviousPage()
 	{
 		$url = $_SERVER['HTTP_REFERER'];
