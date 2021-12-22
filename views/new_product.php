@@ -174,7 +174,7 @@
 
   <div class="form-popup" id="update-form-container">
     <form method="post" action="../modules/update.php" class="form-container">
-      <h1>修改客戶</h1>
+      <h1>修改進貨</h1>
 
       <?php echo create_inputs($conn, $current_scheme, use_default: "none"); ?>
 
@@ -188,7 +188,7 @@
   </div>
   <div class="form-popup" id="insert-form-container">
     <form method="post" action="../modules/insert.php" class="form-container">
-      <h1>新增客戶</h1>
+      <h1>新增進貨</h1>
 
       <?php 
         $input_keys = ["supplier_id","supplier_in_charge","supplier_co_name","product_name","storage_position","specification","product_unit","product_count","product_value_per_unit","total_value","import_date"];

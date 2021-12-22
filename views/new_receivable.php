@@ -99,7 +99,7 @@
           <div class="w3-right">
             <h3>
               <?php
-                echo $current_scheme->SumRows($conn, 'value_awaiting');
+                echo $current_scheme->CountRows($conn, 'value_awaiting');
               ?>
             </h3>
           </div>
@@ -113,7 +113,7 @@
           <div class="w3-right">
             <h3>
               <?php
-                $current_scheme->SumRows($conn, 'value_awaiting', ['active' => '正常']);
+                echo $current_scheme->CountRows($conn, 'value_awaiting', ['active' => '正常']);
               ?>
             </h3>
           </div>
@@ -175,7 +175,7 @@
 
   <div class="form-popup" id="update-form-container">
     <form method="post" action="../modules/update.php" class="form-container">
-      <h1>修改客戶</h1>
+      <h1>修改帳款</h1>
 
       <?php echo create_inputs($conn, $current_scheme, use_default: "none"); ?>
 
@@ -189,7 +189,7 @@
   </div>
   <div class="form-popup" id="insert-form-container">
     <form method="post" action="../modules/insert.php" class="form-container">
-      <h1>新增客戶</h1>
+      <h1>新增帳款</h1>
 
       <?php 
         $input_keys = ["id","value","value_awaiting","due_to_date","customer_name","active"];

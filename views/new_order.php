@@ -265,7 +265,7 @@
   <button class="open-button" onclick="openForm()">新增資料</button>
   <div class="form-popup" id="update-form-container">
     <form method="post" action="../modules/update.php" class="form-container">
-      <h1>修改客戶</h1>
+      <h1>修改訂單</h1>
 
       <?php echo create_inputs($conn, $current_scheme, use_default: "none"); ?>
 
@@ -279,7 +279,7 @@
   </div>
   <div class="form-popup" id="insert-form-container">
     <form method="post" action="../modules/insert.php" class="form-container">
-      <h1>新增客戶</h1>
+      <h1>新增訂單</h1>
 
       <?php 
         $input_keys = ["id","product_name","supplier_co_name","product_unit", "order_count","product_value_per_unit","order_value","expected_payment", "actual_payment"];
