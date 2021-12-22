@@ -37,4 +37,21 @@
 		$url = explode("?", $url)[0];
 		header('Location: '.$url);
 	}
+
+	function CombineWhereStatements($where_statements)
+	{
+		$where_array = array();
+		$has_value = false;
+		foreach ($where_statements as $key => $value)
+		{
+			$has_value = true;
+			array_push($where_array, "$key LIKE '$value'");
+		}
+		if(!$has_value)
+		{
+			return "";
+		}
+		return implode(" AND ", $where_array);
+	}
+	
 ?>

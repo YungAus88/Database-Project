@@ -116,6 +116,12 @@
     	function AsPrimary()
     	{
     		$this->isPrimary = true;
+    		return $this;
+    	}
+    	function NotNull()
+    	{
+    		$this->notNull = true;
+    		return $this;
     	}
 	}
 
@@ -230,6 +236,54 @@
     		$options = implode("", $options);
 			$tail_node = "</select>";
     		return $head_node.$options.$tail_node;
+    		/*
+				<div class="dropdown">
+					<button onclick="myFunction()" class="dropbtn">Dropdown</button>
+					<div id="myDropdown" class="dropdown-content">
+						<input type="text" placeholder="Search.." id="search-drop-down" onkeyup="filterFunction()">
+						<a href="#about">About</a>
+						<a href="#base">Base</a>
+						<a href="#blog">Blog</a>
+						<a href="#contact">Contact</a>
+						<a href="#custom">Custom</a>
+						<a href="#support">Support</a>
+						<a href="#tools">Tools</a>
+					</div>
+			    </div>
+    		*/
+    	}
+	}
+	class SDPVARCHAR extends SLTVARCHAR
+	{
+		public $selections = array();
+		function __construct($name, $db_name, $maximumLength = 0, $selections)
+		{
+			parent::__construct($name, $db_name, $maximumLength, $selections);
+			$this->type = "text";
+			$this->selections = $selections;
+    	}
+    	function input_node($conn, $use_default = "default", $width = 166, $dynamic_width = true, $nullable = true, $other = "")
+    	{
+    		$head_node = array();
+			array_push($head_node, "<div class='dropdown'>");
+			array_push($head_node, "<button type='button' onclick='myFunction()' class='dropbtn'>Dropdown</button>");
+			array_push($head_node, "<div id='myDropdown' class='dropdown-content'>");
+			array_push($head_node, "<input type='text' placeholder='Search..'
+				id='search-drop-down-".$this->db_name."' onkeyup='filterFunction(\'".$this->db_name."\')'>");
+			array_push($head_node, "<div style='overflow: auto; height: 300px;'>");
+
+    		$current_selection = $other != null ? $other : $this->selections;
+    		$options = array();
+
+    		foreach ($current_selection as $value) {
+    			array_push($options, "<a onclick='document.getElementById('search-drop-down-".$this->db_name."').value=$value'>$value</a>");
+    			// array_push($options, "<option value='".$value."'>".$value."</option>");
+    		}
+
+    		$tail_node = "</div></div></div>";
+    		$head_node = implode("", $head_node);
+    		$options = implode("", $options);
+    		return $head_node.$options.$tail_node;
     	}
 	}
 	class FOREIGNKEY extends SLTVARCHAR
@@ -275,7 +329,7 @@
 		public $size_limit = 0;
 		function __construct($name, $db_name, $size_limit = 0)
 		{
-			parent::__construct($name, $db_name, default_value: "NULL", prepare_type: "b");
+			parent::__construct($name, $db_name, default_value: "NULL", prepare_type: "s");
 			$this->type = "file";
 			$this->size_limit = $size_limit;
     	}
@@ -302,14 +356,16 @@
 		        $statusMsg = 'Sorry, only JPG, JPEG, PNG files are allowed to upload.';
 		    }
     	}
-    	function GetPostValue($default = null)
-    	{
-    		if(isset($_FILES["photo"]))
-    		{
-    			return basename($_FILES["photo"]["name"]);
-    		}
-    		return $default == null ? "NULL" : $default;
-    	}
+    	// function GetPostValue($default = null)
+    	// {
+    	// 	echo var_dump($_POST['photo']);
+    	// 	if(isset($_FILES["photo"]))
+    	// 	{
+    	// 		return basename($_FILES["photo"]["name"]);
+    	// 	}
+    	// 	// return "test";
+    	// 	return $default == null ? "NULL" : $default;
+    	// }
 	}
 
 	class Scheme extends ArrayObject
@@ -363,7 +419,10 @@
 				}
 				else
 				{
+					echo "<br>";
+					echo "The following key failed";
 					echo $key;
+					echo "<br>";
 					return false;
 				}
 			}
@@ -414,9 +473,10 @@
 			if(!empty($conn))
 			{
 				$stmt = $conn->stmt_init();
-				if($where == null)
+				$where_statement = "";
+				if($where != null)
 				{
-					$where_statement = "";
+					$where_statement = "WHERE ".CombineWhereStatements($where);
 				}
 				$sql = "SELECT  CAST(AVG($col) AS DECIMAL(10,2)) as count FROM ".$this->table_name." $where_statement;";
 				$result=mysqli_query($conn, $sql);
@@ -430,9 +490,10 @@
 			if(!empty($conn))
 			{
 				$stmt = $conn->stmt_init();
-				if($where == null)
+				$where_statement = "";
+				if($where != null)
 				{
-					$where_statement = "";
+					$where_statement = "WHERE ".CombineWhereStatements($where);
 				}
 				$sql = "SELECT COUNT($col) as count FROM ".$this->table_name." $where_statement;";
 				$result=mysqli_query($conn, $sql);
@@ -440,6 +501,41 @@
 				return $data['count'];
 			}
 		}
+
+		function SumRows($conn, $col, $where = null)
+		{
+			if(!empty($conn))
+			{
+				$stmt = $conn->stmt_init();
+				$where_statement = "";
+				if($where != null)
+				{
+					$where_statement = "WHERE ".CombineWhereStatements($where);
+				}
+				$sql = "SELECT SUM($col) as sum FROM ".$this->table_name." $where_statement;";
+				$result=mysqli_query($conn, $sql);
+				$data=mysqli_fetch_assoc($result);
+				return $data['sum'];
+			}
+		}
+
+		function MaxRows($conn, $col, $where = null)
+		{
+			if(!empty($conn))
+			{
+				$stmt = $conn->stmt_init();
+				$where_statement = "";
+				if($where != null)
+				{
+					$where_statement = "WHERE ".CombineWhereStatements($where);
+				}
+				$sql = "SELECT MAX($col) as max FROM ".$this->table_name." $where_statement;";
+				$result=mysqli_query($conn, $sql);
+				$data=mysqli_fetch_assoc($result);
+				return $data['max'];
+			}
+		}
+
 
 		function Update($conn)
 		{
@@ -479,6 +575,9 @@
 				}
 				else
 				{
+					echo "<br>";
+					echo $sql;
+					echo "<br>";
 					exit("not enough arguments");
 				}
 				
@@ -490,6 +589,9 @@
 				else
 				{
 					echo "Update failed";
+					echo "<br>";
+					echo $sql;
+					echo "<br>";
 					return false;
 				}
 			}
@@ -528,12 +630,14 @@
 				if($post_values = $this->GetPostValues())
 				{
 					$stmt->bind_param($prepare_types, ...$post_values);
+					echo var_dump($post_values);
 				}
 				else
 				{
 					echo $sql;
 					exit("not enough arguments");
 				}
+
 				
 				if($stmt->execute())
 				{

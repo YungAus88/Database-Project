@@ -3,13 +3,14 @@ $database = new Database();
 $customer_scheme = $database->Create(Scheme::Create("customer_data", function ($table)
 {
 	$table->VARCHAR("客戶姓名", "name", "12", "CUSTOMER");
-	$table->VARCHAR("身分證字號", "id", "10", "IDENTITY", "/\w[0-9]{0,9}/")->AsPrimary();
-	$table->VARCHAR("手機號碼", "phone", "16", "PHONE_NUM", "/^09[0-9]{0,2}-?[0-9]{0,3}-?[0-9]{0,3}$/");
+	$table->VARCHAR("身分證字號", "id", "10", "IDENTITY", "/[A-Za-z][0-9]{0,9}/")->AsPrimary();
+	$table->VARCHAR("電話", "phone", "16", "PHONE_NUM", "/^0[0-9]-[0-9]{0,4}-[0-9]{0,4}$/");
+	//"/^09[0-9]{0,2}-?[0-9]{0,3}-?[0-9]{0,3}$/"
 	$table->VARCHAR("住址", "address", "30", "ADDRESS");
 	$table->VARCHAR("年齡", "age", "4", "AGE", "/\d*/");
 	$table->VARCHAR("職業", "profession", "12", "PRO");
 	$table->DATE("登載日期", "created_at", default_value: date('Y-m-d'));
-	$table->IMAGE("照片", "photo");
+	$table->IMAGE("照片", "photo")->NotNull();
 	$table->SLTVARCHAR("消費狀態", "consumption_state", "12", ["啟用", "停用"]);
 }));
 
@@ -40,11 +41,14 @@ $order_scheme = $database->Create(Scheme::Create("customer_order", function ($ta
 {
 	$table->FOREIGNKEY("身分證字號", "id", "10", "customer_data", "id")->AsPrimary();
 	// $table->VARCHAR("身分證字號", "customer_id", "10", "customer_id", "/\w[0-9]{0,9}/")->AsPrimary();
-	$table->VARCHAR("訂貨品名", "product_name", "16", "product_name");
-	$table->VARCHAR("供應商名稱", "supplier_co_name", "16", "supplier_co_name");
-	$table->VARCHAR("單位", "product_unit", "6", "UNIT");
+	$table->FOREIGNKEY("訂貨品名", "product_name", "16", "product_data", "product_name");
+	$table->FOREIGNKEY("供應商名稱", "supplier_co_name", "16", "product_data", "supplier_co_name");
+	// $table->VARCHAR("供應商名稱", "supplier_co_name", "16", "supplier_co_name");
+	$table->FOREIGNKEY("單位", "product_unit", "6", "product_data", "product_unit");
 	$table->NUMERIC("數量", "order_count", "11", "1", "/\d*/", min: 0);
 	$table->NUMERIC("單價", "product_value_per_unit", "11", "1", "/\d*/", min: 0);
 	$table->NUMERIC("訂貨金額", "order_value", "11", "1", "/\d*/", min: 0);
+	$table->DATE("預計交貨日期", "expected_payment", default_value: date('Y-m-d'));
+	$table->DATE("實際交貨日期", "actual_payment", default_value: date('Y-m-d'));
 }));
 ?>

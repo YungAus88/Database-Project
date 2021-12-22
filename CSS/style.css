@@ -7,6 +7,12 @@ td.min {
     white-space: nowrap;
 }
 
+body
+{
+  background-image: url("banner.jpg");
+  background-color: #cccccc;
+}
+
 {box-sizing: border-box;}
 
 /* Button used to open the contact form - fixed at the bottom of the page */
@@ -44,7 +50,7 @@ td.min {
 }
 
 /* Full-width input fields */
-.form-container input{
+.form-container input, .form-container select{
   width: 93%;
   padding: 15px;
   margin: 5px 0 22px 0;
@@ -79,3 +85,59 @@ td.min {
 .form-container .btn:hover, .open-button:hover {
   opacity: 1;
 }
+
+/* DROP DOWN SELECTION */
+
+.dropbtn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.dropbtn:hover, .dropbtn:focus {
+  background-color: #3e8e41;
+}
+
+#search-drop-down {
+  box-sizing: border-box;
+  background-image: url('searchicon.png');
+  background-position: 14px 12px;
+  background-repeat: no-repeat;
+  font-size: 16px;
+  padding: 14px 20px 12px 45px;
+  border: none;
+  border-bottom: 1px solid #ddd;
+}
+
+#search-drop-down:focus {outline: 3px solid #ddd;}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f6f6f6;
+  min-width: 230px;
+  overflow: auto;
+  border: 1px solid #ddd;
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown a:hover {background-color: #ddd;}
+
+.show {display: block;}
+
+/* END DROP DOWN SELECTION */

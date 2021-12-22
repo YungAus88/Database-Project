@@ -22,7 +22,9 @@
     include_once VIEW_HEADER;
 
 
-    $selection = $order_scheme->GetPostValues(true, "%");
+    $current_scheme = $order_scheme;
+
+    $selection = $current_scheme->GetPostValues(true, "%");
 
     $modifying = TryGetValue("modifying", null);
     $modifying = $modifying != null;
@@ -30,26 +32,15 @@
 
     $offset = TryGetValue("offset", "0");
 
-    $results = $order_scheme->Select($conn, "*", $selection, offset: $offset);
+    $results = $current_scheme->Select($conn, $current_scheme->GetDBNames(), $selection, offset: $offset);
   ?>
   <body class="w3-light-grey">
 
   <?php include "top_bar.php" ?>
 
   <!-- Sidebar/menu -->
-  <nav class="w3-sidebar w3-collapse w3-white" style="z-index:3;width:300px;" id="mySidebar"><br>
-    <div class="w3-container w3-row">
-      <div class="w3-col s4">
-        <img src="/w3images/avatar2.png" class="w3-circle w3-margin-right" style="width:46px">
-      </div>
-      <div class="w3-col s8 w3-bar">
-        <span>Welcome, <strong>Mike</strong></span><br>
-        <a href="#" class="w3-bar-item w3-button"><i class="fa fa-envelope"></i></a>
-        <a href="#" class="w3-bar-item w3-button"><i class="fa fa-user"></i></a>
-        <a href="#" class="w3-bar-item w3-button"><i class="fa fa-cog"></i></a>
-      </div>
-    </div>
-    <hr>
+  <nav class="w3-sidebar w3-collapse w3-white" style="z-index:3;width:300px;" id="mySidebar">
+    <a href="https://r-dap.com"><img style="width: 300px; object-fit: cover;" src="banner.jpg"></a>
     <div class="w3-container">
       <h5>資料庫</h5>
     </div>
@@ -80,12 +71,12 @@
           <div class="w3-right">
             <h3>
               <?php
-                // $order_scheme->CountRows($conn, 'age');
+                echo $current_scheme->SumRows($conn, 'order_count');
               ?>
             </h3>
           </div>
           <div class="w3-clear"></div>
-          <h4>Users</h4>
+          <h4>總數量</h4>
           
         </div>
       </div>
@@ -95,32 +86,40 @@
           <div class="w3-right">
             <h3>
               <?php
-                // $order_scheme->Average($conn, 'age');
+                echo $current_scheme->SumRows($conn, 'order_value');
               ?>
             </h3>
           </div>
           <div class="w3-clear"></div>
-          <h4>Average Age</h4>
+          <h4>總價值</h4>
         </div>
       </div>
       <div class="w3-quarter">
         <div class="w3-container w3-teal w3-padding-16">
-          <div class="w3-left"><i class="fa fa-share-alt w3-xxxlarge"></i></div>
+          <div class="w3-left"><i class="fa fa-dollar w3-xxxlarge"></i></div>
           <div class="w3-right">
-            <h3>23</h3>
+            <h3>
+              <?php
+                echo $current_scheme->MaxRows($conn, 'order_value');
+              ?>
+            </h3>
           </div>
           <div class="w3-clear"></div>
-          <h4>Shares</h4>
+          <h4>價值最高</h4>
         </div>
       </div>
       <div class="w3-quarter">
         <div class="w3-container w3-orange w3-text-white w3-padding-16">
           <div class="w3-left"><i class="fa fa-users w3-xxxlarge"></i></div>
           <div class="w3-right">
-            <h3>50</h3>
+            <h3>
+              <?php
+                echo $current_scheme->MaxRows($conn, 'order_count');
+              ?>
+            </h3>
           </div>
           <div class="w3-clear"></div>
-          <h4>Users</h4>
+          <h4>單數最多</h4>
         </div>
       </div>
     </div>
@@ -131,18 +130,18 @@
 
     <div class="w3-medium" style="overflow: scroll; white-space: nowrap">
       <div class="w3-container">
-        <h5>Datas</h5>
+        <h5>資料表</h5>
       </div>
       <table class="w3-table w3-striped w3-white" >
         <form method="post" action="" class="form-container">
           <tr>
             <td></td>
-            <?php echo create_headers($order_scheme); ?>
+            <?php echo create_headers($current_scheme); ?>
           </tr>
           <tr>
             <td><input type="submit" style='width:50px;'></td>
               <?php 
-                echo create_inputs($conn, $order_scheme, use_default: "post", dynamic_width: false, nullable: true);
+                echo create_inputs($conn, $current_scheme, use_default: "post", dynamic_width: false, nullable: true);
               ?>
           </tr>
         </form>
@@ -166,123 +165,96 @@
       </table>
     </div>
     <!-- End Regions -->
-<!-- 
-    <hr>
-    <div class="w3-container">
-      <h5>General Stats</h5>
-      <p>New Visitors</p>
-      <div class="w3-grey">
-        <div class="w3-container w3-center w3-padding w3-green" style="width:25%">+25%</div>
-      </div>
 
-      <p>New Users</p>
-      <div class="w3-grey">
-        <div class="w3-container w3-center w3-padding w3-orange" style="width:50%">50%</div>
-      </div>
-
-      <p>Bounce Rate</p>
-      <div class="w3-grey">
-        <div class="w3-container w3-center w3-padding w3-red" style="width:75%">75%</div>
-      </div>
-    </div>
-    <hr>
-
-    <div class="w3-container">
-      <h5>Countries</h5>
-      <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-        <tr>
-          <td>United States</td>
-          <td>65%</td>
-        </tr>
-        <tr>
-          <td>UK</td>
-          <td>15.7%</td>
-        </tr>
-        <tr>
-          <td>Russia</td>
-          <td>5.6%</td>
-        </tr>
-        <tr>
-          <td>Spain</td>
-          <td>2.1%</td>
-        </tr>
-        <tr>
-          <td>India</td>
-          <td>1.9%</td>
-        </tr>
-        <tr>
-          <td>France</td>
-          <td>1.5%</td>
-        </tr>
-      </table><br>
-      <button class="w3-button w3-dark-grey">More Countries  <i class="fa fa-arrow-right"></i></button>
-    </div>
-    <hr>
-    <div class="w3-container">
-      <h5>Recent Users</h5>
-      <ul class="w3-ul w3-card-4 w3-white">
-        <li class="w3-padding-16">
-          <img src="/w3images/avatar2.png" class="w3-left w3-circle w3-margin-right" style="width:35px">
-          <span class="w3-xlarge">Mike</span><br>
-        </li>
-        <li class="w3-padding-16">
-          <img src="/w3images/avatar5.png" class="w3-left w3-circle w3-margin-right" style="width:35px">
-          <span class="w3-xlarge">Jill</span><br>
-        </li>
-        <li class="w3-padding-16">
-          <img src="/w3images/avatar6.png" class="w3-left w3-circle w3-margin-right" style="width:35px">
-          <span class="w3-xlarge">Jane</span><br>
-        </li>
-      </ul>
-    </div>
-    <hr>
-
-    <div class="w3-container">
-      <h5>Recent Comments</h5>
-      <div class="w3-row">
-        <div class="w3-col m2 text-center">
-          <img class="w3-circle" src="/w3images/avatar3.png" style="width:96px;height:96px">
-        </div>
-        <div class="w3-col m10 w3-container">
-          <h4>John <span class="w3-opacity w3-medium">Sep 29, 2014, 9:12 PM</span></h4>
-          <p>Keep up the GREAT work! I am cheering for you!! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p><br>
+    <!-- Bottom Statistics -->
+    <div class="w3-row-padding w3-margin-bottom">
+      <div class="w3-quarter">
+        <div class="w3-container w3-red w3-padding-16">
+          <h3>
+            星期統計金額
+          </h3>
+          <form method="post" action="" name="week_selection" value="week_selection">
+            <input type="date" name="week_selection_date"/>
+            <input type="hidden" name="week_selection" value="week_selection">
+            <input type="submit"/>
+          </form>
+          <?php
+            if(isset($_POST['week_selection']))
+            {
+              $date = $_POST['week_selection_date'];
+              echo "<h4>";
+              echo "已選擇星期: ";
+              echo $date;
+              echo "</h4>";
+              echo "<h5>";
+              echo "總價值: ";
+              $date_sql = "SELECT SUM(`order_value`) as sum FROM customer_order WHERE ABS( DATEDIFF(`actual_payment`, '$date') ) < 7;";
+              if($result = $conn->query($date_sql))
+              {
+                while($row = $result->fetch_assoc())
+                {
+                  echo $row['sum'];
+                }
+              }
+              echo "</h5>";
+            }
+          ?>
         </div>
       </div>
-
-      <div class="w3-row">
-        <div class="w3-col m2 text-center">
-          <img class="w3-circle" src="/w3images/avatar1.png" style="width:96px;height:96px">
-        </div>
-        <div class="w3-col m10 w3-container">
-          <h4>Bo <span class="w3-opacity w3-medium">Sep 28, 2014, 10:15 PM</span></h4>
-          <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p><br>
+      <div class="w3-quarter">
+        <div class="w3-container w3-blue w3-padding-16">
+          <h3>
+            使用者統計金額
+          </h3>
+          <form method="post" action="" name="user_week_selection" value="user_week_selection">
+            <input type="date" name="week_selection_date"/>
+            <select name='time_spent'>
+              <option value='year'>全年</option>
+              <option value='month'>整月</option>
+              <option value='week'>星期</option>
+            </select>
+            <br>
+            <?php echo $current_scheme['身分證字號']->input_node($conn); ?>
+            <input type="hidden" name="user_week_selection" value="user_week_selection">
+            <input type="submit"/>
+          </form>
+          <?php
+            if(isset($_POST['user_week_selection']))
+            {
+              $date = $_POST['week_selection_date'];
+              $user = $_POST['id'];
+              $time_spent = $_POST['time_spent'];
+              if($_POST['time_spent'] == "year")
+                $time_spent = "365";
+              if($_POST['time_spent'] == "month")
+                $time_spent = "30";
+              if($_POST['time_spent'] == "week")
+                $time_spent = "7";
+              
+              echo "<h4>";
+              echo "已選擇星期: ";
+              echo $date;
+              echo "</h4>";
+              echo "<h5>";
+              echo "總價值: ";
+              $date_sql = "SELECT SUM(`order_value`) as sum FROM customer_order WHERE ABS( DATEDIFF(`actual_payment`, '$date') ) < $time_spent AND `id` = '$user';";
+              if($result = $conn->query($date_sql))
+              {
+                while($row = $result->fetch_assoc())
+                {
+                  echo $row['sum'];
+                }
+              }
+              echo "</h5>";
+            }
+          ?>
         </div>
       </div>
     </div>
-    <br>
-    <div class="w3-container w3-dark-grey w3-padding-32">
-      <div class="w3-row">
-        <div class="w3-container w3-third">
-          <h5 class="w3-bottombar w3-border-green">Demographic</h5>
-          <p>Language</p>
-          <p>Country</p>
-          <p>City</p>
-        </div>
-        <div class="w3-container w3-third">
-          <h5 class="w3-bottombar w3-border-red">System</h5>
-          <p>Browser</p>
-          <p>OS</p>
-          <p>More</p>
-        </div>
-        <div class="w3-container w3-third">
-          <h5 class="w3-bottombar w3-border-orange">Target</h5>
-          <p>Users</p>
-          <p>Active</p>
-          <p>Geo</p>
-          <p>Interests</p>
-        </div>
-      </div>
-    </div> -->
+
+    <div class="w3-quater" style="overflow: scroll; white-space: nowrap">
+      
+    </div>
 
     <?php include "footer.php"; ?>
 
@@ -295,7 +267,7 @@
     <form method="post" action="../modules/update.php" class="form-container">
       <h1>修改客戶</h1>
 
-      <?php echo create_inputs($conn, $order_scheme, use_default: "none"); ?>
+      <?php echo create_inputs($conn, $current_scheme, use_default: "none"); ?>
 
       <!-- Create a hidden primary value for seraching the original primary -->
       <?php echo "<input type='hidden' name='origin' id='origin' value=''>"; ?>
@@ -310,8 +282,8 @@
       <h1>新增客戶</h1>
 
       <?php 
-        $input_keys = ["customer_id","product_name","supplier_co_name","product_unit", "order_count","product_value_per_unit","order_value"];
-        echo create_inputs($conn, $order_scheme, keys: $input_keys, use_default: "none"); 
+        $input_keys = ["id","product_name","supplier_co_name","product_unit", "order_count","product_value_per_unit","order_value","expected_payment", "actual_payment"];
+        echo create_inputs($conn, $current_scheme, keys: $input_keys, use_default: "none"); 
       ?>
 
       <input type="hidden" name="table" value="order_scheme"/>
@@ -320,89 +292,7 @@
     </form>
   </div>
 
-  <script type="text/javascript">
-
-    var primary = <?php echo json_encode($order_scheme->FindPrimary()->db_name); ?>;
-    var primary_value = null;
-    var db_names = <?php echo json_encode($order_scheme->GetDBNames()); ?>;
-
-    function openForm() {
-      document.getElementById("insert-form-container").style.display = "block";
-    }
-
-    function closeForm() {
-      document.getElementById("insert-form-container").style.display = "none";
-    }
-
-    function openUpdateForm(row_id)
-    {
-      document.getElementById("update-form-container").style.display = "block";
-
-      var form = document.getElementById("update-form-container").children[0];
-
-      var element = document.getElementById(row_id);
-      for(var col_node=element.firstChild; col_node!==null; col_node=col_node.nextSibling)
-      {
-        if(col_node.id == primary)
-        {
-          primary_value = col_node.innerHTML;
-        }
-        for(var i=0; i < form.children.length; i++)
-        {
-          if(form.children[i].id == col_node.id)
-          {
-            
-            if(db_names.includes(col_node.id))
-            {
-              form.children[i].value = col_node.innerHTML;
-            }
-
-          }
-          if(form.children[i].id == "origin")
-          {
-            form.children[i].value = primary_value;
-          }
-        }
-      }
-    }
-
-    function closeUpdateForm()
-    {
-      document.getElementById("update-form-container").style.display = "none";
-    }
-
-    function validate(max_length = 0, regex = "")
-    {
-
-    }
-  </script>
-
-  <!-- End Popup Form -->
-
-  <script>
-  // Get the Sidebar
-  var mySidebar = document.getElementById("mySidebar");
-
-  // Get the DIV with overlay effect
-  var overlayBg = document.getElementById("myOverlay");
-
-  // Toggle between showing and hiding the sidebar, and add overlay effect
-  function w3_open() {
-    if (mySidebar.style.display === 'block') {
-      mySidebar.style.display = 'none';
-      overlayBg.style.display = "none";
-    } else {
-      mySidebar.style.display = 'block';
-      overlayBg.style.display = "block";
-    }
-  }
-
-  // Close the sidebar with the close button
-  function w3_close() {
-    mySidebar.style.display = "none";
-    overlayBg.style.display = "none";
-  }
-  </script>
+  <?php include "javascript.php"; ?>
 
   </body>
 </html>
